@@ -1,9 +1,5 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-    <Search />
-  </div>
+  <Search />
 </template>
 
 <script>
@@ -12,10 +8,10 @@
 import Search from '@/components/HomeSearch.vue'
 
 export default {
-  name: 'home',
+  name: 'Home',
+
   components: {
-    // HelloWorld,
-    Search
-  }
-}
+    Search,
+  },
+};
 </script>

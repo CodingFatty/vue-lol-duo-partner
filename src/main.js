@@ -8,6 +8,7 @@ import VueAxios from 'vue-axios';
 import Highcharts from 'highcharts';
 import VueHighcharts from 'vue-highcharts';
 import loadDrilldown from 'highcharts/modules/drilldown.js';
+import vuetify from './plugins/vuetify';
 
 Vue.config.productionTip = false
 
@@ -18,5 +19,6 @@ Vue.use(VueHighcharts, { Highcharts });
 
 new Vue({
   router,
+  vuetify,
   render: h => h(App)
 }).$mount('#app')

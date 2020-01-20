@@ -1,21 +1,38 @@
 <template>
-  <div v-if="loaded">
-    <h1>{{$route.query.player1_name}} vs {{$route.query.player2_name}}</h1>
-    <div :class="'graph'">
-      <div v-for="option in SDchartOptions" :key="option.name">
-        <highcharts :options="option"></highcharts>
-      </div>
-    </div>
-    <div :class="'graph'">
-      <div v-for="option in championChartOption" :key="option.name">
-        <highcharts :options="option"></highcharts>
-      </div>
-    </div>
-    <div :class="'graph'">
-      <div v-for="option in championWRChartOptions" :key="option.name">
-        <highcharts :options="option"></highcharts>
-      </div>
-    </div>
+  <div>
+    <v-container fill-height fluid>
+      <v-row align="center" justify="center">
+        <h1 class="text-xs-center">{{$route.query.player1_name}} vs {{$route.query.player2_name}}</h1>
+      </v-row>
+      <v-row align="center" justify="center">
+        <div v-if="loaded">
+          <div :class="'graph'">
+            <div v-for="option in SDchartOptions" :key="option.name">
+              <highcharts :options="option"></highcharts>
+            </div>
+          </div>
+          <div :class="'graph'">
+            <div v-for="option in championChartOption" :key="option.name">
+              <highcharts :options="option"></highcharts>
+            </div>
+          </div>
+          <div :class="'graph'">
+            <div v-for="option in championWRChartOptions" :key="option.name">
+              <highcharts :options="option"></highcharts>
+            </div>
+          </div>
+        </div>
+        <div v-else>
+          <v-progress-circular
+            :indeterminate="indeterminate"
+            :rotate="rotate"
+            :size="size"
+            :width="width"
+            color="light-blue"
+          ></v-progress-circular>
+        </div>
+      </v-row>
+    </v-container>
   </div>
 </template>
 
@@ -27,6 +44,11 @@ export default {
   data() {
     return {
       // show: false,
+      indeterminate: true,
+      rotate: 0,
+      size: 48,
+      // value: 0,
+      width: 4,
       history: {},
       playerObj: {
         Player1: {

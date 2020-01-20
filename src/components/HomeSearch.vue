@@ -1,9 +1,13 @@
 <template>
   <div>
-    <input v-model.trim="player1_name" placeholder="name1" />
-    <input v-model.trim="player2_name" placeholder="name2" />
-    <!-- @keyup.enter="submitName()"  -->
-    <button @click="submitName()">Search!</button>
+    <v-container fill-height fluid>
+      <v-row align="center" justify="center">
+        <v-text-field v-model.trim="player1_name" label="Summoner1"></v-text-field>
+        <v-text-field v-model.trim="player2_name" label="Summoner2" ></v-text-field>
+        <!-- @keyup.enter="submitName()"  -->
+        <v-btn @click="submitName()" text>Search!</v-btn>
+      </v-row>
+    </v-container>
   </div>
 </template>
 
@@ -15,8 +19,8 @@ export default {
   },
   data() {
     return {
-      player1_name: "ultraden",
-      player2_name: "kenjiman"
+      player1_name: "",
+      player2_name: ""
     };
   },
   methods: {
