@@ -3,7 +3,10 @@
     <v-row justify="center" style="height: 10%">
       <h1>{{$route.query.player1_name}} vs {{$route.query.player2_name}}</h1>
     </v-row>
-    <div v-if="loaded" style="height:90%, width: 100%">
+    <v-row v-if="errorMessage" justify="center" style="height: 90%">
+      <h1 style="color: red">Error: {{errorMessage}}</h1>
+    </v-row>
+    <div v-else-if="loaded" style="height:90%, width: 100%">
       <v-row>
         <v-col v-for="option in SDchartOptions" :key="option.name">
           <highcharts :options="option"></highcharts>
@@ -43,6 +46,7 @@ export default {
       rotate: 0,
       size: 64,
       width: 4,
+      errorMessage: "",
       ddragonList: {},
       playerObj: {
         Player1: {
@@ -132,7 +136,7 @@ export default {
     // Fill out summoner & champ info
     await this.getSummonerHistory();
     await this.fetchDdragon();
-    
+
     // Init charts details
     this.InitChampInfo("Player1");
     this.initSDchart("Player1");
@@ -164,7 +168,7 @@ export default {
           this.playerObj.Player2.championId = res.data.Player2.championWinRate;
         })
         .catch(err => {
-          return err;
+          this.errorMessage = err.message;
         });
     },
     async fetchDdragon() {
