@@ -1,29 +1,14 @@
 # duo-partner
 
-## Project setup
+## Frontend Deployment
 ```
-npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
+https://duo-analysis.firebaseapp.com/
 ```
 
-### Compiles and minifies for production
+### Backend Deployment
 ```
-npm run build
-```
-
-### Run your tests
-```
-npm run test
+https://duo-analysis.herokuapp.com/
 ```
 
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### Purpose
+It aims to bring summoner performance on their ranked games by data visualization 
