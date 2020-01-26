@@ -1,39 +1,35 @@
 <template>
-  <div>
-    <v-container fill-height fluid>
-      <v-row align="center" justify="center">
-        <h1 class="text-xs-center">{{$route.query.player1_name}} vs {{$route.query.player2_name}}</h1>
+  <v-container fill-height fluid>
+    <v-row justify="center" style="height: 10%">
+      <h1>{{$route.query.player1_name}} vs {{$route.query.player2_name}}</h1>
+    </v-row>
+    <div v-if="loaded" style="height:90%, width: 100%">
+      <v-row>
+        <v-col v-for="option in SDchartOptions" :key="option.name">
+          <highcharts :options="option"></highcharts>
+        </v-col>
       </v-row>
-      <v-row align="center" justify="center">
-        <div v-if="loaded">
-          <div :class="'graph'">
-            <div v-for="option in SDchartOptions" :key="option.name">
-              <highcharts :options="option"></highcharts>
-            </div>
-          </div>
-          <div :class="'graph'">
-            <div v-for="option in championChartOption" :key="option.name">
-              <highcharts :options="option"></highcharts>
-            </div>
-          </div>
-          <div :class="'graph'">
-            <div v-for="option in championWRChartOptions" :key="option.name">
-              <highcharts :options="option"></highcharts>
-            </div>
-          </div>
-        </div>
-        <div v-else>
-          <v-progress-circular
-            :indeterminate="indeterminate"
-            :rotate="rotate"
-            :size="size"
-            :width="width"
-            color="light-blue"
-          ></v-progress-circular>
-        </div>
+      <v-row>
+        <v-col v-for="option in championChartOption" :key="option.name">
+          <highcharts :options="option"></highcharts>
+        </v-col>
       </v-row>
-    </v-container>
-  </div>
+      <v-row>
+        <v-col v-for="option in championWRChartOptions" :key="option.name">
+          <highcharts :options="option"></highcharts>
+        </v-col>
+      </v-row>
+    </div>
+    <v-row v-else align="start" justify="center" style="height: 90%">
+      <v-progress-circular
+        :indeterminate="indeterminate"
+        :rotate="rotate"
+        :size="size"
+        :width="width"
+        color="light-blue"
+      ></v-progress-circular>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -43,13 +39,11 @@ export default {
   name: "Result",
   data() {
     return {
-      // show: false,
       indeterminate: true,
       rotate: 0,
-      size: 48,
-      // value: 0,
+      size: 64,
       width: 4,
-      history: {},
+      ddragonList: {},
       playerObj: {
         Player1: {
           winRate: {
@@ -135,20 +129,11 @@ export default {
     };
   },
   async created() {
+    // Fill out summoner & champ info
     await this.getSummonerHistory();
-    console.log(this.history);
-    let player1 = this.history.Player1;
-    let player2 = this.history.Player2;
-
-    this.InitPlayerInfo(player1, "Player1");
-    this.InitPlayerInfo(player2, "Player2");
-    // console.log(
-    //   size1,
-    //   size2,
-    //   JSON.parse(JSON.stringify(this.playerObj.Player1.winRate)),
-    //   this.playerObj.Player2.championId
-    // );
-
+    await this.fetchDdragon();
+    
+    // Init charts details
     this.InitChampInfo("Player1");
     this.initSDchart("Player1");
     this.initchampionWRchart("Player1");
@@ -157,114 +142,42 @@ export default {
     this.initchampionWRchart("Player2");
   },
   methods: {
-    InitPlayerInfo(player, id) {
-      _.forEach(player, obj => {
-        // Calculate KDA, total game, Win rate for each champion
-        if (!_.has(this.playerObj[id].championId, obj.championId)) {
-          let champObj = {
-            kills: obj.kills,
-            assists: obj.assists,
-            deaths: obj.deaths,
-            totalGame: 1
-          };
-          obj.victory
-            ? ((champObj.win = 1), (champObj.lose = 0))
-            : ((champObj.win = 0), (champObj.lose = 1));
-          this.playerObj[id].championId[obj.championId] = champObj;
-        } else {
-          this.playerObj[id].championId[obj.championId].kills += obj.kills;
-          this.playerObj[id].championId[obj.championId].assists += obj.assists;
-          this.playerObj[id].championId[obj.championId].deaths += obj.deaths;
-          this.playerObj[id].championId[obj.championId].totalGame += 1;
-          obj.victory
-            ? this.playerObj[id].championId[obj.championId].win++
-            : this.playerObj[id].championId[obj.championId].lose++;
-        }
-
-        //   Calculate solo + role Win rate
-        let role = "";
-        let victory = "";
-        let total = "";
-        obj.role === "SOLO" ? (role = "solo") : (role = "duo");
-        obj.victory === true
-          ? ((victory = "win"), (total = "totalWin"))
-          : ((victory = "lose"), (total = "totalLose"));
-        this.playerObj[id].winRate[role][obj.lane]
-          ? this.playerObj[id].winRate[role][obj.lane][victory]
-            ? (this.playerObj[id].winRate[role][obj.lane][victory]++,
-              this.playerObj[id].winRate[role][total]++)
-            : ((this.playerObj[id].winRate[role][obj.lane][victory] = 1),
-              this.playerObj[id].winRate[role][total]++)
-          : (this.playerObj[id].winRate[role][obj.lane] = {});
-      });
-    },
     InitChampInfo(id) {
       _.forEach(this.playerObj[id].championId, async (value, key) => {
         let champData = [];
-        let { name } = await this.getchamp(key);
+        let name = this.getchamp(key);
         champData.push(name);
         champData.push((value.kills + value.assists) / value.deaths);
         this.playerObj[id].championChartData.push(champData);
       });
     },
     async getSummonerHistory() {
-      //   let self = this;
       return await this.axios
-        .post("http://localhost:8000/result", {
+        .post("https://duo-analysis.herokuapp.com/result", {
           player1_name: this.$route.query.player1_name,
           player2_name: this.$route.query.player2_name
         })
         .then(res => {
-          this.history = res.data;
-          return true;
+          this.playerObj.Player1.winRate = res.data.Player1.OverallWinRate;
+          this.playerObj.Player1.championId = res.data.Player1.championWinRate;
+          this.playerObj.Player2.winRate = res.data.Player2.OverallWinRate;
+          this.playerObj.Player2.championId = res.data.Player2.championWinRate;
         })
         .catch(err => {
-          console.log(err);
+          return err;
         });
     },
-    async getchamp(key) {
-      let championByIdCache = {};
-      let championJson = {};
-
-      async function getLatestChampionDDragon(language) {
-        if (championJson[language]) return championJson[language];
-
-        let response;
-        let versionIndex = 0;
-        do {
-          // I loop over versions because 9.22.1 is broken
-          const version = (
-            await fetch(
-              "http://ddragon.leagueoflegends.com/api/versions.json"
-            ).then(async r => await r.json())
-          )[versionIndex++];
-
-          response = await fetch(
-            `https://ddragon.leagueoflegends.com/cdn/${version}/data/${language}/champion.json`
-          );
-        } while (!response.ok);
-
-        championJson[language] = await response.json();
-        return championJson[language];
+    async fetchDdragon() {
+      if (_.isEmpty(this.ddragonList)) {
+        let response = await fetch(
+          `https://ddragon.leagueoflegends.com/cdn/10.2.1/data/en_US/champion.json`
+        );
+        let champJson = await response.json();
+        this.ddragonList = champJson.data;
       }
-
-      async function getChampionByKey(key, language) {
-        // Setup cache
-        if (!championByIdCache[language]) {
-          let json = await getLatestChampionDDragon(language);
-
-          championByIdCache[language] = {};
-          for (var championName in json.data) {
-            if (!json.data.hasOwnProperty(championName)) continue;
-
-            const champInfo = json.data[championName];
-            championByIdCache[language][champInfo.key] = champInfo;
-          }
-        }
-
-        return championByIdCache[language][key];
-      }
-      return await getChampionByKey(key, "en_US");
+    },
+    getchamp(key) {
+      return _.findKey(this.ddragonList, ["key", key]);
     },
     initSDchart(id) {
       this.playerObj[id].SDchart.series.data = [
@@ -346,7 +259,7 @@ export default {
       let drilldownData = [];
       _.forEach(this.playerObj[id].championId, async (value, key) => {
         // championData
-        let { name } = await this.getchamp(key);
+        let name = this.getchamp(key);
         let champObj = {
           name,
           y: (value.totalGame / totalGamePlayed) * 100,
@@ -631,16 +544,5 @@ export default {
       ];
     }
   }
-  // watch: {
-  //   '$route.query.player1_name': function () {
-  //     this.getSummonerHistory();
-  //   },
-  // },
 };
 </script>
-<style scoped>
-.graph {
-  display: flex;
-  justify-content: center;
-}
-</style>
